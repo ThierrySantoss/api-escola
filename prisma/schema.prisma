@@ -1,0 +1,122 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Sexo {
+  M // Masculino
+  F // Feminino
+}
+
+enum EstadoCivil {
+  C // Casado
+  S // Solteiro
+  D // Divorciado
+}
+
+model Titulo {
+  id_titulo    Int         @id @default(autoincrement())
+  tx_descricao String      @db.VarChar(150)
+  professores  Professor[]
+}
+
+model Professor {
+  id_professor    Int         @id @default(autoincrement())
+  id_titulo       Int
+  tx_nome         String      @db.VarChar(50)
+  tx_sexo         Sexo        @default(M)
+  tx_estado_civil EstadoCivil @default(S)
+  dt_nascimento   DateTime    @db.Date
+  tx_telefone     String      @db.VarChar(13)
+  titulo          Titulo      @relation(fields: [id_titulo], references: [id_titulo], onUpdate: Cascade, onDelete: Cascade)
+  leciona         Leciona[]
+}
+
+model Instituicao {
+  id_instituicao Int     @id @default(autoincrement())
+  tx_sigla       String  @db.VarChar(15)
+  tx_descricao   String  @db.VarChar(150)
+  cursos         Curso[]
+}
+
+model TipoCurso {
+  id_tipo_curso Int     @id @default(autoincrement())
+  tx_descricao  String  @db.VarChar(150)
+  cursos        Curso[]
+}
+
+model Curso {
+  id_curso       Int          @id @default(autoincrement())
+  id_instituicao Int
+  instituicao    Instituicao  @relation(fields: [id_instituicao], references: [id_instituicao], onDelete: Cascade, onUpdate: Cascade)
+  id_tipo_curso  Int
+  tipoCurso      TipoCurso    @relation(fields: [id_tipo_curso], references: [id_tipo_curso], onDelete: Cascade, onUpdate: Cascade)
+  tx_descricao   String       @db.VarChar(150)
+  disciplinas    Disciplina[]
+}
+
+model TipoDisciplina {
+  id_tipo_disciplina Int          @id @default(autoincrement())
+  tx_descricao       String       @db.VarChar(150)
+  disciplinas        Disciplina[]
+}
+
+model Disciplina {
+  id_disciplina      Int            @id @default(autoincrement())
+  id_curso           Int
+  id_tipo_disciplina Int
+  tx_sigla           String         @db.VarChar(10)
+  tx_descricao       String         @db.VarChar(150)
+  in_periodo         Int
+  in_carga_horaria   Int
+  tipoDisciplina     TipoDisciplina @relation(fields: [id_tipo_disciplina], references: [id_tipo_disciplina], onDelete: Cascade, onUpdate: Cascade)
+  curso              Curso          @relation(fields: [id_curso], references: [id_curso], onDelete: Cascade, onUpdate: Cascade)
+  leciona            Leciona[]
+  cursa              Cursa[]
+  /// CHECK (periodos e carga horaria) - Implementado via migration SQL
+}
+
+model Leciona {
+  id_leciona    Int        @id @default(autoincrement())
+  id_professor  Int
+  id_disciplina Int
+  professor     Professor  @relation(fields: [id_professor], references: [id_professor], onDelete: Cascade, onUpdate: Cascade)
+  disciplina    Disciplina @relation(fields: [id_disciplina], references: [id_disciplina], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model Aluno {
+  id_aluno      Int      @id @default(autoincrement())
+  tx_nome       String   @db.VarChar(100)
+  tx_sexo       Sexo
+  dt_nascimento DateTime @db.Date
+  Cursa         Cursa[]
+}
+
+model Cursa {
+  id_cursa      Int        @id @default(autoincrement())
+  id_aluno      Int
+  id_disciplina Int
+  in_ano        Int
+  in_semestre   Int
+  in_faltas     Int        @default(0)
+  nm_nota1      Decimal    @default(0.00) @db.Decimal(4, 2)
+  nm_nota2      Decimal    @default(0.00) @db.Decimal(4, 2)
+  nm_nota3      Decimal    @default(0.00) @db.Decimal(4, 2)
+  bl_aprovado   Boolean    @default(false)
+  aluno         Aluno      @relation(fields: [id_aluno], references: [id_aluno], onDelete: Cascade, onUpdate: Cascade)
+  disciplina    Disciplina @relation(fields: [id_disciplina], references: [id_disciplina], onDelete: Cascade, onUpdate: Cascade)
+  /// CHECK (notas e faltas válidas) - Implementado via migration SQL
+
+  @@unique([id_aluno, id_disciplina, in_ano, in_semestre])
+}
