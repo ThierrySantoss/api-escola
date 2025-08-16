@@ -41,7 +41,6 @@ app.get("/titulo", async (req, res) => {
 // Retorna o Titulo do ID passado
 app.get("/titulo/:id", async (req, res) => {
   const id = Number(req.params.id);
-  console.log(id);
 
   try {
     const titulo = await prisma.titulo.findUnique({
