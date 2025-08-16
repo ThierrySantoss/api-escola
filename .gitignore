@@ -4,9 +4,6 @@ node_modules/
 # Variáveis de ambiente
 .env
 
-# Arquivos gerados pelo Prisma
-/generated
-
 # Arquivos de log
 *.log
 
